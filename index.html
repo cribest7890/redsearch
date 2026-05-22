@@ -3,433 +3,186 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Search</title>
+<title>RedSearch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg:        #0e0505;
-    --bg2:       #1a0a0a;
-    --bg3:       #241010;
-    --accent:    #361212;
-    --accent2:   #5c2020;
-    --accent3:   #8b3a3a;
-    --highlight: #c97070;
-    --gold:      #d4956a;
-    --text:      #f0e8e8;
-    --text2:     #b89090;
-    --text3:     #7a5555;
-    --border:    rgba(139,58,58,0.25);
-    --border2:   rgba(139,58,58,0.5);
-    --glow:      rgba(201,112,112,0.15);
-    --radius:    12px;
-  }
+:root {
+  --bg:        #0e0505;
+  --bg2:       #1a0a0a;
+  --bg3:       #241010;
+  --accent:    #361212;
+  --accent2:   #5c2020;
+  --accent3:   #8b3a3a;
+  --highlight: #c97070;
+  --gold:      #d4956a;
+  --text:      #f0e8e8;
+  --text2:     #b89090;
+  --text3:     #7a5555;
+  --border:    rgba(139,58,58,0.25);
+  --border2:   rgba(139,58,58,0.5);
+  --glow:      rgba(201,112,112,0.15);
+  --radius:    12px;
+}
 
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
-  }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.6; }
 
-  /* noise overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-  }
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
 
-  /* ─── layout ─── */
-  #app {
-    position: relative;
-    z-index: 1;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+#app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
 
-  /* ─── home view ─── */
-  #home {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    gap: 2rem;
-  }
+/* ── HOME ── */
+#home { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; gap: 2rem; }
 
-  .logo-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-  }
+.logo { font-family: 'DM Serif Display', serif; font-size: clamp(3rem, 8vw, 5.5rem); color: var(--text); letter-spacing: -0.02em; line-height: 1; }
+.logo span { color: var(--highlight); }
+.tagline { font-size: 0.8rem; color: var(--text3); letter-spacing: 0.14em; text-transform: uppercase; }
 
-  .logo {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(3rem, 8vw, 5.5rem);
-    color: var(--text);
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
+/* ── SEARCH BOX ── */
+.search-wrap { width: 100%; max-width: 640px; position: relative; }
 
-  .logo span {
-    color: var(--highlight);
-  }
+.search-box {
+  display: flex; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 50px; padding: 0 1.25rem; gap: 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-box:focus-within { border-color: var(--highlight); box-shadow: 0 0 0 3px var(--glow), 0 0 30px var(--glow); }
 
-  .tagline {
-    font-size: 0.85rem;
-    color: var(--text3);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
+.search-icon { color: var(--text3); flex-shrink: 0; }
 
-  /* ─── search box ─── */
-  .search-wrap {
-    width: 100%;
-    max-width: 640px;
-    position: relative;
-  }
+#search-input, #bar-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 1.05rem;
+  padding: 0.9rem 0; caret-color: var(--highlight);
+}
+#search-input::placeholder, #bar-input::placeholder { color: var(--text3); }
 
-  .search-box {
-    display: flex;
-    align-items: center;
-    background: var(--bg2);
-    border: 1px solid var(--border2);
-    border-radius: 50px;
-    padding: 0 1.25rem;
-    gap: 0.75rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    position: relative;
-  }
+.search-btn {
+  background: var(--accent2); border: none; border-radius: 50px;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+  font-weight: 500; padding: 0.45rem 1.1rem; cursor: pointer;
+  transition: background 0.2s, transform 0.1s; flex-shrink: 0;
+}
+.search-btn:hover { background: var(--accent3); }
+.search-btn:active { transform: scale(0.97); }
 
-  .search-box:focus-within {
-    border-color: var(--highlight);
-    box-shadow: 0 0 0 3px var(--glow), 0 0 30px var(--glow);
-  }
+.kbd-hint { font-size: 0.75rem; color: var(--text3); margin-top: 0.6rem; text-align: center; }
+.kbd { display: inline-block; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 0.7rem; font-family: monospace; }
 
-  .search-icon {
-    color: var(--text3);
-    flex-shrink: 0;
-    font-size: 1.1rem;
-  }
+/* ── SUGGESTIONS ── */
+.suggestions {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--radius); overflow: hidden; z-index: 100;
+  display: none; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.suggestions.open { display: block; }
+.suggestion-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.65rem 1.25rem; cursor: pointer; font-size: 0.9rem;
+  color: var(--text2); transition: background 0.1s, color 0.1s;
+}
+.suggestion-item:hover, .suggestion-item.active { background: var(--accent); color: var(--text); }
 
-  #search-input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1.05rem;
-    padding: 0.9rem 0;
-    caret-color: var(--highlight);
-  }
+/* ── CATEGORIES ── */
+.categories { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+.cat-btn {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 50px; color: var(--text2); font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem; padding: 0.3rem 0.9rem; cursor: pointer; transition: all 0.15s;
+}
+.cat-btn:hover { border-color: var(--accent3); color: var(--text); }
+.cat-btn.active { background: var(--accent); border-color: var(--highlight); color: var(--text); }
 
-  #search-input::placeholder { color: var(--text3); }
+/* ── RESULTS BAR ── */
+#results-bar {
+  display: none; align-items: center; gap: 1rem;
+  padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--border);
+  background: var(--bg2); position: sticky; top: 0; z-index: 50;
+  flex-wrap: wrap;
+}
+#results-bar.visible { display: flex; }
 
-  .search-btn {
-    background: var(--accent2);
-    border: none;
-    border-radius: 50px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 500;
-    padding: 0.45rem 1.1rem;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-    flex-shrink: 0;
-  }
+.bar-logo { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: var(--text); cursor: pointer; flex-shrink: 0; }
+.bar-logo span { color: var(--highlight); }
 
-  .search-btn:hover { background: var(--accent3); }
-  .search-btn:active { transform: scale(0.97); }
+.bar-search-wrap { flex: 1; min-width: 200px; max-width: 540px; position: relative; }
+.bar-search-box {
+  display: flex; align-items: center; background: var(--bg3);
+  border: 1px solid var(--border2); border-radius: 50px; padding: 0 1rem; gap: 0.6rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.bar-search-box:focus-within { border-color: var(--highlight); box-shadow: 0 0 0 2px var(--glow); }
+#bar-input { font-size: 0.95rem; padding: 0.6rem 0; }
 
-  .kbd-hint {
-    font-size: 0.75rem;
-    color: var(--text3);
-    margin-top: 0.6rem;
-    text-align: center;
-  }
+.bar-cats { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
-  .kbd {
-    display: inline-block;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1px 5px;
-    font-size: 0.7rem;
-    font-family: monospace;
-  }
+/* ── RESULTS PAGE ── */
+#results-page { display: none; flex: 1; padding: 1.5rem; max-width: 760px; margin: 0 auto; width: 100%; }
+#results-page.visible { display: block; }
 
-  /* ─── suggestions dropdown ─── */
-  .suggestions {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    right: 0;
-    background: var(--bg2);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    overflow: hidden;
-    z-index: 100;
-    display: none;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  }
+.result-meta { font-size: 0.8rem; color: var(--text3); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.result-meta .timing { margin-left: auto; }
 
-  .suggestions.open { display: block; }
+/* ── RESULT CARD ── */
+.result-card {
+  padding: 1rem 0.75rem; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s, padding-left 0.15s;
+  border-radius: 6px; margin-bottom: 2px;
+  text-decoration: none; display: block; color: inherit;
+}
+.result-card:hover { background: var(--bg2); padding-left: 1rem; }
 
-  .suggestion-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.65rem 1.25rem;
-    cursor: pointer;
-    font-size: 0.95rem;
-    color: var(--text2);
-    transition: background 0.1s, color 0.1s;
-  }
+.result-site { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text3); margin-bottom: 0.25rem; }
+.result-favicon { width: 14px; height: 14px; border-radius: 2px; }
+.result-title { font-size: 1.1rem; font-weight: 500; color: var(--highlight); margin-bottom: 0.25rem; line-height: 1.35; }
+.result-url { font-size: 0.75rem; color: var(--text3); margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.result-snippet { font-size: 0.88rem; color: var(--text2); line-height: 1.55; }
+.result-snippet mark { background: rgba(201,112,112,0.25); color: var(--highlight); border-radius: 2px; padding: 0 2px; font-style: normal; }
 
-  .suggestion-item:hover,
-  .suggestion-item.active {
-    background: var(--accent);
-    color: var(--text);
-  }
+/* ── STATES ── */
+.state-box { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem 1rem; color: var(--text3); font-size: 0.9rem; }
+.state-box svg { opacity: 0.3; }
+.spinner { width: 28px; height: 28px; border: 2px solid var(--border2); border-top-color: var(--highlight); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  .suggestion-item svg {
-    opacity: 0.5;
-    flex-shrink: 0;
-  }
+/* ── PAGINATION ── */
+.pagination { display: flex; gap: 0.5rem; justify-content: center; padding: 2rem 0 1rem; flex-wrap: wrap; }
+.page-btn {
+  background: transparent; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+  padding: 0.35rem 0.8rem; cursor: pointer; transition: all 0.15s;
+}
+.page-btn:hover { border-color: var(--accent3); color: var(--text); }
+.page-btn.active { background: var(--accent); border-color: var(--highlight); color: var(--text); }
 
-  /* ─── categories ─── */
-  .categories {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+/* ── KBD MODAL ── */
+#kbd-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
+#kbd-modal.open { display: flex; }
+.modal-box { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 1.5rem; width: 90%; max-width: 360px; }
+.modal-title { font-size: 1rem; font-weight: 500; margin-bottom: 1rem; color: var(--text); }
+.shortcut-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--text2); }
+.shortcut-row:last-child { border: none; }
+.close-modal { margin-top: 1rem; width: 100%; background: var(--accent); border: 1px solid var(--border2); border-radius: 50px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; padding: 0.5rem; cursor: pointer; transition: background 0.15s; }
+.close-modal:hover { background: var(--accent2); }
 
-  .cat-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    color: var(--text2);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.8rem;
-    padding: 0.3rem 0.9rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
+/* ── CONFIG BANNER ── */
+#config-banner { background: var(--accent); border: 1px solid var(--accent3); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; color: var(--text2); text-align: center; max-width: 640px; display: none; }
+#config-banner.show { display: block; }
+#config-banner a { color: var(--highlight); }
 
-  .cat-btn:hover { border-color: var(--accent3); color: var(--text); }
-
-  .cat-btn.active {
-    background: var(--accent);
-    border-color: var(--highlight);
-    color: var(--text);
-  }
-
-  /* ─── results header (compact) ─── */
-  #results-bar {
-    display: none;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.75rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg2);
-    position: sticky;
-    top: 0;
-    z-index: 50;
-  }
-
-  #results-bar.visible { display: flex; }
-
-  .bar-logo {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.4rem;
-    color: var(--text);
-    text-decoration: none;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  .bar-logo span { color: var(--highlight); }
-
-  .bar-search-wrap {
-    flex: 1;
-    max-width: 580px;
-    position: relative;
-  }
-
-  .bar-search-box {
-    display: flex;
-    align-items: center;
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-radius: 50px;
-    padding: 0 1rem;
-    gap: 0.6rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-
-  .bar-search-box:focus-within {
-    border-color: var(--highlight);
-    box-shadow: 0 0 0 2px var(--glow);
-  }
-
-  #bar-input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    padding: 0.6rem 0;
-    caret-color: var(--highlight);
-  }
-
-  .bar-cats {
-    display: flex;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-    margin-left: auto;
-  }
-
-  /* ─── results page ─── */
-  #results-page {
-    display: none;
-    flex: 1;
-    padding: 1.5rem;
-    max-width: 740px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  #results-page.visible { display: block; }
-
-  .result-count {
-    font-size: 0.8rem;
-    color: var(--text3);
-    margin-bottom: 1.25rem;
-  }
-
-  /* results are real links opened by redirect */
-  .result-card {
-    background: transparent;
-    border-radius: var(--radius);
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-
-  .result-card:hover { background: var(--bg2); padding-left: 0.75rem; padding-right: 0.75rem; }
-
-  .result-site {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.78rem;
-    color: var(--text3);
-    margin-bottom: 0.2rem;
-  }
-
-  .result-favicon {
-    width: 14px;
-    height: 14px;
-    border-radius: 2px;
-  }
-
-  .result-title {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: var(--highlight);
-    margin-bottom: 0.25rem;
-    line-height: 1.3;
-  }
-
-  .result-title:hover { text-decoration: underline; }
-
-  .result-snippet {
-    font-size: 0.88rem;
-    color: var(--text2);
-    line-height: 1.5;
-  }
-
-  /* ─── keyboard modal ─── */
-  #kbd-modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #kbd-modal.open { display: flex; }
-
-  .modal-box {
-    background: var(--bg2);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    width: 90%;
-    max-width: 360px;
-  }
-
-  .modal-title {
-    font-size: 1rem;
-    font-weight: 500;
-    margin-bottom: 1rem;
-    color: var(--text);
-  }
-
-  .shortcut-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.4rem 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.85rem;
-    color: var(--text2);
-  }
-
-  .shortcut-row:last-child { border: none; }
-
-  .close-modal {
-    margin-top: 1rem;
-    width: 100%;
-    background: var(--accent);
-    border: 1px solid var(--border2);
-    border-radius: 50px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
-    padding: 0.5rem;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-
-  .close-modal:hover { background: var(--accent2); }
-
-  /* ─── responsive ─── */
-  @media (max-width: 600px) {
-    .bar-cats { display: none; }
-    #results-bar { flex-wrap: wrap; }
-  }
+@media (max-width: 600px) {
+  .bar-cats { display: none; }
+  #bar-input { font-size: 0.9rem; }
+}
 </style>
 </head>
 <body>
@@ -437,42 +190,35 @@
 
   <!-- ── HOME ── -->
   <div id="home">
-    <div class="logo-wrap">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem">
       <div class="logo">Re<span>d</span>Search</div>
       <div class="tagline">il tuo motore di ricerca</div>
     </div>
 
+    <div id="config-banner">
+      ⚠️ Configura <code>SUPABASE_URL</code> e <code>SUPABASE_KEY</code> in questo file prima di usarlo.
+      <a href="#" onclick="document.getElementById('config-banner').style.display='none'">chiudi</a>
+    </div>
+
     <div class="search-wrap">
       <div class="search-box">
-        <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input id="search-input" type="text" placeholder="Cerca nel web…" autocomplete="off" spellcheck="false" />
+        <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="search-input" type="text" placeholder="Cerca nel web indicizzato…" autocomplete="off" spellcheck="false" />
         <button class="search-btn" onclick="doSearch()">Cerca</button>
       </div>
-      <div class="suggestions" id="suggestions"></div>
+      <div class="suggestions" id="home-suggestions"></div>
       <div class="kbd-hint">
-        Premi <span class="kbd">/</span> o <span class="kbd">Ctrl K</span> per cercare &nbsp;·&nbsp;
-        <span class="kbd">?</span> per le scorciatoie
+        <span class="kbd">/</span> o <span class="kbd">Ctrl K</span> per cercare &nbsp;·&nbsp;
+        <span class="kbd">?</span> scorciatoie
       </div>
     </div>
 
     <div class="categories" id="home-cats">
-      <button class="cat-btn active" data-cat="web" onclick="setCategory(this,'web')">
-        🌐 Web
-      </button>
-      <button class="cat-btn" data-cat="images" onclick="setCategory(this,'images')">
-        🖼 Immagini
-      </button>
-      <button class="cat-btn" data-cat="news" onclick="setCategory(this,'news')">
-        📰 Notizie
-      </button>
-      <button class="cat-btn" data-cat="videos" onclick="setCategory(this,'videos')">
-        ▶ Video
-      </button>
-      <button class="cat-btn" data-cat="maps" onclick="setCategory(this,'maps')">
-        📍 Mappe
-      </button>
+      <button class="cat-btn active" data-cat="all" onclick="setCategory(this)">Tutto</button>
+      <button class="cat-btn" data-cat="news" onclick="setCategory(this)">Notizie</button>
+      <button class="cat-btn" data-cat="wiki" onclick="setCategory(this)">Wiki</button>
+      <button class="cat-btn" data-cat="tech" onclick="setCategory(this)">Tech</button>
+      <button class="cat-btn" data-cat="social" onclick="setCategory(this)">Social</button>
     </div>
   </div>
 
@@ -481,232 +227,361 @@
     <span class="bar-logo" onclick="goHome()">Re<span>d</span>Search</span>
     <div class="bar-search-wrap">
       <div class="bar-search-box">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input id="bar-input" type="text" autocomplete="off" spellcheck="false" />
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="bar-input" type="text" placeholder="Cerca…" autocomplete="off" spellcheck="false" />
       </div>
       <div class="suggestions" id="bar-suggestions"></div>
     </div>
     <div class="bar-cats">
-      <button class="cat-btn active" data-cat="web" onclick="setCategory(this,'web')">🌐 Web</button>
-      <button class="cat-btn" data-cat="images" onclick="setCategory(this,'images')">🖼 Immagini</button>
-      <button class="cat-btn" data-cat="news" onclick="setCategory(this,'news')">📰 Notizie</button>
-      <button class="cat-btn" data-cat="videos" onclick="setCategory(this,'videos')">▶ Video</button>
-      <button class="cat-btn" data-cat="maps" onclick="setCategory(this,'maps')">📍 Mappe</button>
+      <button class="cat-btn active" data-cat="all" onclick="setCategory(this)">Tutto</button>
+      <button class="cat-btn" data-cat="news" onclick="setCategory(this)">Notizie</button>
+      <button class="cat-btn" data-cat="wiki" onclick="setCategory(this)">Wiki</button>
+      <button class="cat-btn" data-cat="tech" onclick="setCategory(this)">Tech</button>
+      <button class="cat-btn" data-cat="social" onclick="setCategory(this)">Social</button>
     </div>
   </div>
 
-  <!-- ── RESULTS PAGE ── -->
+  <!-- ── RESULTS ── -->
   <div id="results-page">
-    <div class="result-count" id="result-count"></div>
+    <div class="result-meta" id="result-meta"></div>
     <div id="results-list"></div>
+    <div class="pagination" id="pagination"></div>
   </div>
 
 </div>
 
-<!-- ── KEYBOARD SHORTCUTS MODAL ── -->
+<!-- ── KBD MODAL ── -->
 <div id="kbd-modal">
   <div class="modal-box">
     <div class="modal-title">Scorciatoie tastiera</div>
     <div class="shortcut-row"><span>Apri ricerca</span><span><span class="kbd">/</span> o <span class="kbd">Ctrl K</span></span></div>
     <div class="shortcut-row"><span>Cerca</span><span><span class="kbd">Enter</span></span></div>
-    <div class="shortcut-row"><span>Suggerimento su/giù</span><span><span class="kbd">↑</span> <span class="kbd">↓</span></span></div>
-    <div class="shortcut-row"><span>Chiudi / home</span><span><span class="kbd">Esc</span></span></div>
+    <div class="shortcut-row"><span>Naviga suggerimenti</span><span><span class="kbd">↑</span> <span class="kbd">↓</span></span></div>
+    <div class="shortcut-row"><span>Chiudi / torna home</span><span><span class="kbd">Esc</span></span></div>
     <div class="shortcut-row"><span>Mostra scorciatoie</span><span><span class="kbd">?</span></span></div>
     <button class="close-modal" onclick="closeModal()">Chiudi</button>
   </div>
 </div>
 
 <script>
-  // ─── state ───────────────────────────────────────────
-  let currentCategory = 'web';
-  let suggestTimer = null;
-  let activeSuggestion = -1;
-  let currentSuggestions = [];
-  let isResultsView = false;
+// ── CONFIGURA QUI ──────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://evfviwsmbgjggprbalph.supabase.co/rest/v1/";  // <-- sostituisci
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2ZnZpd3NtYmdqZ2dwcmJhbHBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTc0NjgsImV4cCI6MjA5NTAzMzQ2OH0.5adtv4hzNnVIj_0o9fZNw1OL1mlmxFRlykksinmwTS8";         // <-- anon public key
+// ──────────────────────────────────────────────────────────────────────────
 
-  // ─── engines per categoria ────────────────────────────
-  const engines = {
-    web:    q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
-    images: q => `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q)}`,
-    news:   q => `https://www.google.com/search?tbm=nws&q=${encodeURIComponent(q)}`,
-    videos: q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
-    maps:   q => `https://www.google.com/maps/search/${encodeURIComponent(q)}`,
-  };
+// Mostra banner se non configurato
+if (SUPABASE_URL.includes("XXXXXXXX")) {
+  document.getElementById("config-banner").classList.add("show");
+}
 
-  // ─── suggestions (OpenSearch via DuckDuckGo JSONP) ────
-  function fetchSuggestions(q, boxId) {
-    clearTimeout(suggestTimer);
-    const box = document.getElementById(boxId);
-    if (!q.trim()) { box.classList.remove('open'); return; }
-    suggestTimer = setTimeout(() => {
-      const script = document.createElement('script');
-      window._suggestCb = (data) => {
-        currentSuggestions = data[1] ? data[1].slice(0, 7) : [];
-        activeSuggestion = -1;
-        renderSuggestions(boxId, currentSuggestions);
-        document.head.removeChild(script);
-      };
-      script.src = `https://ac.duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list&callback=_suggestCb`;
-      document.head.appendChild(script);
-    }, 160);
+// ── Mappatura categorie → domini keyword ───────────────────────────────────
+const CAT_DOMAINS = {
+  all:    null,
+  news:   ["ansa.it","repubblica.it","corriere.it","bbc.com","reuters.com","theguardian.com","nytimes.com"],
+  wiki:   ["wikipedia.org","wikimedia.org"],
+  tech:   ["github.com","stackoverflow.com","dev.to","medium.com","hackernews.com","ycombinator.com"],
+  social: ["reddit.com","mastodon.social","lemmy.world","lobste.rs"],
+};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let currentCategory = "all";
+let currentQuery    = "";
+let currentPage     = 1;
+const PAGE_SIZE     = 10;
+let isResultsView   = false;
+let suggestTimer    = null;
+let activeSug       = -1;
+let currentSugs     = [];
+let searchHistory   = JSON.parse(localStorage.getItem("rs_history") || "[]");
+
+// ── Supabase fetch helper ──────────────────────────────────────────────────
+async function sbFetch(path, params = {}) {
+  const url = new URL(SUPABASE_URL + path);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const res = await fetch(url, {
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+    }
+  });
+  if (!res.ok) throw new Error(`Supabase error ${res.status}`);
+  return res.json();
+}
+
+// ── Full-text search via RPC ───────────────────────────────────────────────
+async function searchPages(query, page = 1) {
+  const offset = (page - 1) * PAGE_SIZE;
+
+  // chiama la funzione RPC search_pages
+  let url = new URL(SUPABASE_URL + "/rest/v1/rpc/search_pages");
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query, max_results: 200 }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error("Supabase RPC error: " + err);
   }
 
-  function renderSuggestions(boxId, list) {
-    const box = document.getElementById(boxId);
-    if (!list.length) { box.classList.remove('open'); return; }
-    box.innerHTML = list.map((s, i) => `
-      <div class="suggestion-item" data-idx="${i}" onmousedown="pickSuggestion('${s.replace(/'/g,"\\'")}')">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        ${escHtml(s)}
-      </div>`).join('');
-    box.classList.add('open');
+  let results = await res.json();
+
+  // filtra per categoria
+  const domains = CAT_DOMAINS[currentCategory];
+  if (domains) {
+    results = results.filter(r =>
+      domains.some(d => (r.domain || "").includes(d))
+    );
   }
 
-  function pickSuggestion(s) {
-    activeInput().value = s;
-    document.querySelectorAll('.suggestions').forEach(b => b.classList.remove('open'));
-    doSearch();
+  const total = results.length;
+  const page_results = results.slice(offset, offset + PAGE_SIZE);
+  return { results: page_results, total };
+}
+
+// ── Suggestions dalla history locale ──────────────────────────────────────
+function getSuggestions(q) {
+  if (!q.trim()) return [];
+  const lq = q.toLowerCase();
+  return searchHistory
+    .filter(h => h.toLowerCase().includes(lq) && h.toLowerCase() !== lq)
+    .slice(0, 6);
+}
+
+function renderSuggestions(boxId, list) {
+  const box = document.getElementById(boxId);
+  currentSugs = list;
+  activeSug = -1;
+  if (!list.length) { box.classList.remove("open"); return; }
+  box.innerHTML = list.map((s, i) =>
+    `<div class="suggestion-item" data-idx="${i}" onmousedown="pickSug('${escAttr(s)}')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      ${escHtml(s)}
+    </div>`
+  ).join("");
+  box.classList.add("open");
+}
+
+function pickSug(s) {
+  activeInput().value = s;
+  closeSuggestions();
+  doSearch();
+}
+
+function closeSuggestions() {
+  document.querySelectorAll(".suggestions").forEach(b => b.classList.remove("open"));
+}
+
+function activeInput() {
+  return isResultsView
+    ? document.getElementById("bar-input")
+    : document.getElementById("search-input");
+}
+
+// ── Category ──────────────────────────────────────────────────────────────
+function setCategory(btn) {
+  currentCategory = btn.dataset.cat;
+  document.querySelectorAll(".cat-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.cat === currentCategory)
+  );
+  if (currentQuery) {
+    currentPage = 1;
+    runSearch(currentQuery, currentPage);
   }
+}
 
-  function activeInput() {
-    return isResultsView ? document.getElementById('bar-input') : document.getElementById('search-input');
+// ── Search ────────────────────────────────────────────────────────────────
+function doSearch() {
+  const q = activeInput().value.trim();
+  if (!q) return;
+  closeSuggestions();
+  // salva in history
+  searchHistory = [q, ...searchHistory.filter(h => h !== q)].slice(0, 30);
+  localStorage.setItem("rs_history", JSON.stringify(searchHistory));
+  currentQuery = q;
+  currentPage  = 1;
+  showResultsView(q);
+  runSearch(q, 1);
+}
+
+function showResultsView(q) {
+  isResultsView = true;
+  document.getElementById("home").style.display = "none";
+  document.getElementById("results-bar").classList.add("visible");
+  document.getElementById("results-page").classList.add("visible");
+  document.getElementById("bar-input").value = q;
+}
+
+function goHome() {
+  isResultsView = false;
+  currentQuery  = "";
+  document.getElementById("home").style.display = "";
+  document.getElementById("results-bar").classList.remove("visible");
+  document.getElementById("results-page").classList.remove("visible");
+  document.getElementById("search-input").value = "";
+  document.getElementById("bar-input").value    = "";
+  document.getElementById("results-list").innerHTML = "";
+  document.getElementById("pagination").innerHTML   = "";
+}
+
+async function runSearch(q, page) {
+  const list  = document.getElementById("results-list");
+  const meta  = document.getElementById("result-meta");
+  const pager = document.getElementById("pagination");
+
+  list.innerHTML  = `<div class="state-box"><div class="spinner"></div><span>Ricerca in corso…</span></div>`;
+  meta.innerHTML  = "";
+  pager.innerHTML = "";
+
+  const t0 = performance.now();
+
+  try {
+    const { results, total } = await searchPages(q, page);
+    const ms = ((performance.now() - t0) / 1000).toFixed(2);
+
+    if (total === 0) {
+      list.innerHTML = `
+        <div class="state-box">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span>Nessun risultato per <strong>${escHtml(q)}</strong></span>
+          <span style="font-size:0.8rem">Prova con parole diverse o aggiungi più siti con il crawler</span>
+        </div>`;
+      return;
+    }
+
+    meta.innerHTML = `
+      <span>${total.toLocaleString()} risultati</span>
+      <span class="timing">${ms}s</span>`;
+
+    list.innerHTML = results.map(r => buildCard(r, q)).join("");
+    renderPagination(total, page, q);
+
+  } catch (e) {
+    list.innerHTML = `
+      <div class="state-box">
+        <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Errore di connessione a Supabase</span>
+        <span style="font-size:0.78rem;color:var(--text3)">${escHtml(e.message)}</span>
+      </div>`;
   }
+}
 
-  // ─── category ─────────────────────────────────────────
-  function setCategory(btn, cat) {
-    currentCategory = cat;
-    document.querySelectorAll('.cat-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.cat === cat);
-    });
-  }
+function buildCard(r, q) {
+  const domain = r.domain || new URL(r.url).hostname;
+  const title  = escHtml(r.title || domain);
+  const url    = escHtml(r.url);
+  const snip   = highlight(escHtml(truncate(r.description || "", 180)), q);
 
-  // ─── search ───────────────────────────────────────────
-  function doSearch() {
-    const q = activeInput().value.trim();
-    if (!q) return;
-    const url = engines[currentCategory](q);
-    window.open(url, '_blank', 'noopener');
-    showResultsView(q);
-  }
-
-  function showResultsView(q) {
-    isResultsView = true;
-    document.getElementById('home').style.display = 'none';
-    document.getElementById('results-bar').classList.add('visible');
-    document.getElementById('results-page').classList.add('visible');
-    document.getElementById('bar-input').value = q;
-    renderFakeResults(q);
-  }
-
-  function goHome() {
-    isResultsView = false;
-    document.getElementById('home').style.display = '';
-    document.getElementById('results-bar').classList.remove('visible');
-    document.getElementById('results-page').classList.remove('visible');
-    document.getElementById('search-input').value = '';
-    document.getElementById('bar-input').value = '';
-  }
-
-  // ─── preview results (apertura diretta sul motore) ────
-  // Mostriamo "shortcut" ai motori più comuni come anteprima navigabile
-  const previewLinks = [
-    { title: q => `${q} — Ricerca Google`, url: q => engines.web(q), site: 'google.com', snippet: q => `Cerca "${q}" su Google. Risultati web, immagini, notizie e altro.` },
-    { title: q => `${q} — DuckDuckGo`, url: q => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`, site: 'duckduckgo.com', snippet: q => `Ricerca privata per "${q}" senza tracciamento. Risultati web organici.` },
-    { title: q => `${q} — Brave Search`, url: q => `https://search.brave.com/search?q=${encodeURIComponent(q)}`, site: 'search.brave.com', snippet: q => `Risultati indipendenti per "${q}" da Brave Search, senza bolle di filtraggio.` },
-    { title: q => `${q} — Wikipedia`, url: q => `https://it.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}`, site: 'it.wikipedia.org', snippet: q => `Cerca "${q}" su Wikipedia in italiano. L'enciclopedia libera.` },
-    { title: q => `${q} — YouTube`, url: q => engines.videos(q), site: 'youtube.com', snippet: q => `Video su "${q}". Guarda tutorial, notizie e contenuti correlati.` },
-    { title: q => `${q} — Reddit`, url: q => `https://www.reddit.com/search/?q=${encodeURIComponent(q)}`, site: 'reddit.com', snippet: q => `Discussioni della community su "${q}". Opinioni, esperienze e consigli reali.` },
-  ];
-
-  function renderFakeResults(q) {
-    const list = document.getElementById('results-list');
-    document.getElementById('result-count').textContent = `Reindirizzamento a ${Object.keys(engines).find(k => engines[k](q) === engines[currentCategory](q)) || currentCategory} · Apertura in corso…`;
-
-    list.innerHTML = previewLinks.map(p => `
-      <div class="result-card" onclick="window.open('${p.url(q).replace(/'/g,"\\'")}','_blank','noopener')">
-        <div class="result-site">
-          <img class="result-favicon" src="https://www.google.com/s2/favicons?sz=16&domain=${p.site}" onerror="this.style.display='none'" alt="">
-          ${p.site}
-        </div>
-        <div class="result-title">${escHtml(p.title(q))}</div>
-        <div class="result-snippet">${escHtml(p.snippet(q))}</div>
+  return `
+    <a class="result-card" href="${url}" target="_blank" rel="noopener">
+      <div class="result-site">
+        <img class="result-favicon" src="https://www.google.com/s2/favicons?sz=16&domain=${escHtml(domain)}" onerror="this.style.display='none'" alt="">
+        ${escHtml(domain)}
       </div>
-    `).join('');
-  }
+      <div class="result-title">${title}</div>
+      <div class="result-url">${url}</div>
+      <div class="result-snippet">${snip}</div>
+    </a>`;
+}
 
-  // ─── keyboard nav ─────────────────────────────────────
-  function handleKey(e, boxId) {
-    const box = document.getElementById(boxId);
-    const items = box.querySelectorAll('.suggestion-item');
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      activeSuggestion = Math.min(activeSuggestion + 1, items.length - 1);
-      highlight(items);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      activeSuggestion = Math.max(activeSuggestion - 1, -1);
-      highlight(items);
-    } else if (e.key === 'Enter') {
-      if (activeSuggestion >= 0 && items[activeSuggestion]) {
-        activeInput().value = currentSuggestions[activeSuggestion];
-        box.classList.remove('open');
-      }
-      doSearch();
-    } else if (e.key === 'Escape') {
-      if (box.classList.contains('open')) {
-        box.classList.remove('open');
-      } else {
-        goHome();
-      }
-    }
-  }
-
-  function highlight(items) {
-    items.forEach((el, i) => el.classList.toggle('active', i === activeSuggestion));
-    if (activeSuggestion >= 0) activeInput().value = currentSuggestions[activeSuggestion];
-  }
-
-  // ─── global shortcuts ─────────────────────────────────
-  document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'INPUT') return;
-    if (e.key === '/' || (e.ctrlKey && e.key === 'k')) {
-      e.preventDefault();
-      (isResultsView
-        ? document.getElementById('bar-input')
-        : document.getElementById('search-input')
-      ).focus();
-    }
-    if (e.key === '?') {
-      e.preventDefault();
-      document.getElementById('kbd-modal').classList.add('open');
-    }
+function highlight(text, query) {
+  const words = query.trim().split(/\s+/).filter(Boolean);
+  let out = text;
+  words.forEach(w => {
+    const re = new RegExp(`(${w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")})`, "gi");
+    out = out.replace(re, "<mark>$1</mark>");
   });
+  return out;
+}
 
-  function closeModal() {
-    document.getElementById('kbd-modal').classList.remove('open');
+function truncate(s, n) {
+  return s.length <= n ? s : s.slice(0, n) + "…";
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────
+function renderPagination(total, page, q) {
+  const pages = Math.ceil(total / PAGE_SIZE);
+  if (pages <= 1) return;
+  const pager = document.getElementById("pagination");
+  let html = "";
+  const start = Math.max(1, page - 3);
+  const end   = Math.min(pages, page + 3);
+  if (start > 1) html += `<button class="page-btn" onclick="goPage(1,'${escAttr(q)}')">1</button>`;
+  if (start > 2) html += `<span style="color:var(--text3);align-self:center">…</span>`;
+  for (let i = start; i <= end; i++) {
+    html += `<button class="page-btn${i===page?" active":""}" onclick="goPage(${i},'${escAttr(q)}')">${i}</button>`;
   }
+  if (end < pages - 1) html += `<span style="color:var(--text3);align-self:center">…</span>`;
+  if (end < pages) html += `<button class="page-btn" onclick="goPage(${pages},'${escAttr(q)}')">${pages}</button>`;
+  pager.innerHTML = html;
+}
 
-  document.getElementById('kbd-modal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeModal();
-  });
+function goPage(p, q) {
+  currentPage = p;
+  runSearch(q, p);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
-  // ─── wire inputs ──────────────────────────────────────
-  const si = document.getElementById('search-input');
-  si.addEventListener('input', () => fetchSuggestions(si.value, 'suggestions'));
-  si.addEventListener('keydown', e => handleKey(e, 'suggestions'));
-  si.addEventListener('blur', () => setTimeout(() => document.getElementById('suggestions').classList.remove('open'), 150));
-
-  const bi = document.getElementById('bar-input');
-  bi.addEventListener('input', () => fetchSuggestions(bi.value, 'bar-suggestions'));
-  bi.addEventListener('keydown', e => handleKey(e, 'bar-suggestions'));
-  bi.addEventListener('blur', () => setTimeout(() => document.getElementById('bar-suggestions').classList.remove('open'), 150));
-
-  // ─── util ─────────────────────────────────────────────
-  function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ── Keyboard ──────────────────────────────────────────────────────────────
+function handleKey(e, boxId) {
+  const box   = document.getElementById(boxId);
+  const items = box.querySelectorAll(".suggestion-item");
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    activeSug = Math.min(activeSug + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle("active", i === activeSug));
+    if (activeSug >= 0) activeInput().value = currentSugs[activeSug];
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    activeSug = Math.max(activeSug - 1, -1);
+    items.forEach((el, i) => el.classList.toggle("active", i === activeSug));
+    if (activeSug >= 0) activeInput().value = currentSugs[activeSug];
+  } else if (e.key === "Enter") {
+    if (activeSug >= 0 && items[activeSug]) {
+      activeInput().value = currentSugs[activeSug];
+      closeSuggestions();
+    }
+    doSearch();
+  } else if (e.key === "Escape") {
+    if (box.classList.contains("open")) closeSuggestions();
+    else goHome();
   }
+}
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "/" || (e.ctrlKey && e.key === "k")) {
+    e.preventDefault();
+    activeInput().focus();
+  }
+  if (e.key === "?") {
+    e.preventDefault();
+    document.getElementById("kbd-modal").classList.add("open");
+  }
+});
+
+function closeModal() { document.getElementById("kbd-modal").classList.remove("open"); }
+document.getElementById("kbd-modal").addEventListener("click", e => { if (e.target === e.currentTarget) closeModal(); });
+
+// ── Wire inputs ───────────────────────────────────────────────────────────
+const si = document.getElementById("search-input");
+si.addEventListener("input", () => renderSuggestions("home-suggestions", getSuggestions(si.value)));
+si.addEventListener("keydown", e => handleKey(e, "home-suggestions"));
+si.addEventListener("blur", () => setTimeout(closeSuggestions, 150));
+
+const bi = document.getElementById("bar-input");
+bi.addEventListener("input", () => renderSuggestions("bar-suggestions", getSuggestions(bi.value)));
+bi.addEventListener("keydown", e => handleKey(e, "bar-suggestions"));
+bi.addEventListener("blur", () => setTimeout(closeSuggestions, 150));
+
+// ── Utils ─────────────────────────────────────────────────────────────────
+function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function escAttr(s) { return String(s).replace(/'/g,"\\'"); }
 </script>
 </body>
 </html>
