@@ -596,6 +596,23 @@ bi.addEventListener("blur", () => setTimeout(closeSuggestions, 150));
 // ── Utils ─────────────────────────────────────────────────────────────────
 function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function escAttr(s) { return String(s).replace(/'/g,"\\'"); }
+
+  // ── URL search param (?search=...) ─────────────────────────────
+window.addEventListener("load", () => {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get("search");
+
+  if (q && q.trim()) {
+    currentQuery = q;
+
+    document.getElementById("search-input").value = q;
+    document.getElementById("bar-input").value = q;
+
+    showResultsView(q);
+    runSearch(q, 1);
+  }
+});
+  
 </script>
 </body>
 </html>
