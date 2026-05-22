@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0e0505;
+    --bg2:       #1a0a0a;
+    --bg3:       #241010;
+    --accent:    #361212;
+    --accent2:   #5c2020;
+    --accent3:   #8b3a3a;
+    --highlight: #c97070;
+    --gold:      #d4956a;
+    --text:      #f0e8e8;
+    --text2:     #b89090;
+    --text3:     #7a5555;
+    --border:    rgba(139,58,58,0.25);
+    --border2:   rgba(139,58,58,0.5);
+    --glow:      rgba(201,112,112,0.15);
+    --radius:    12px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── layout ─── */
+  #app {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── home view ─── */
+  #home {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    gap: 2rem;
+  }
+
+  .logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .logo span {
+    color: var(--highlight);
+  }
+
+  .tagline {
+    font-size: 0.85rem;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ─── search box ─── */
+  .search-wrap {
+    width: 100%;
+    max-width: 640px;
+    position: relative;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 50px;
+    padding: 0 1.25rem;
+    gap: 0.75rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+
+  .search-box:focus-within {
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 3px var(--glow), 0 0 30px var(--glow);
+  }
+
+  .search-icon {
+    color: var(--text3);
+    flex-shrink: 0;
+    font-size: 1.1rem;
+  }
+
+  #search-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    padding: 0.9rem 0;
+    caret-color: var(--highlight);
+  }
+
+  #search-input::placeholder { color: var(--text3); }
+
+  .search-btn {
+    background: var(--accent2);
+    border: none;
+    border-radius: 50px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.45rem 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    flex-shrink: 0;
+  }
+
+  .search-btn:hover { background: var(--accent3); }
+  .search-btn:active { transform: scale(0.97); }
+
+  .kbd-hint {
+    font-size: 0.75rem;
+    color: var(--text3);
+    margin-top: 0.6rem;
+    text-align: center;
+  }
+
+  .kbd {
+    display: inline-block;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.7rem;
+    font-family: monospace;
+  }
+
+  /* ─── suggestions dropdown ─── */
+  .suggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .suggestions.open { display: block; }
+
+  .suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1.25rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text2);
+    transition: background 0.1s, color 0.1s;
+  }
+
+  .suggestion-item:hover,
+  .suggestion-item.active {
+    background: var(--accent);
+    color: var(--text);
+  }
+
+  .suggestion-item svg {
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  /* ─── categories ─── */
+  .categories {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .cat-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .cat-btn:hover { border-color: var(--accent3); color: var(--text); }
+
+  .cat-btn.active {
+    background: var(--accent);
+    border-color: var(--highlight);
+    color: var(--text);
+  }
+
+  /* ─── results header (compact) ─── */
+  #results-bar {
+    display: none;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  #results-bar.visible { display: flex; }
+
+  .bar-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    color: var(--text);
+    text-decoration: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .bar-logo span { color: var(--highlight); }
+
+  .bar-search-wrap {
+    flex: 1;
+    max-width: 580px;
+    position: relative;
+  }
+
+  .bar-search-box {
+    display: flex;
+    align-items: center;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 50px;
+    padding: 0 1rem;
+    gap: 0.6rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .bar-search-box:focus-within {
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 2px var(--glow);
+  }
+
+  #bar-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 0.6rem 0;
+    caret-color: var(--highlight);
+  }
+
+  .bar-cats {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+
+  /* ─── results page ─── */
+  #results-page {
+    display: none;
+    flex: 1;
+    padding: 1.5rem;
+    max-width: 740px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  #results-page.visible { display: block; }
+
+  .result-count {
+    font-size: 0.8rem;
+    color: var(--text3);
+    margin-bottom: 1.25rem;
+  }
+
+  /* results are real links opened by redirect */
+  .result-card {
+    background: transparent;
+    border-radius: var(--radius);
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .result-card:hover { background: var(--bg2); padding-left: 0.75rem; padding-right: 0.75rem; }
+
+  .result-site {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--text3);
+    margin-bottom: 0.2rem;
+  }
+
+  .result-favicon {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+  }
+
+  .result-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--highlight);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+  }
+
+  .result-title:hover { text-decoration: underline; }
+
+  .result-snippet {
+    font-size: 0.88rem;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  /* ─── keyboard modal ─── */
+  #kbd-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #kbd-modal.open { display: flex; }
+
+  .modal-box {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 360px;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+
+  .shortcut-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text2);
+  }
+
+  .shortcut-row:last-child { border: none; }
+
+  .close-modal {
+    margin-top: 1rem;
+    width: 100%;
+    background: var(--accent);
+    border: 1px solid var(--border2);
+    border-radius: 50px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .close-modal:hover { background: var(--accent2); }
+
+  /* ─── responsive ─── */
+  @media (max-width: 600px) {
+    .bar-cats { display: none; }
+    #results-bar { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── HOME ── -->
+  <div id="home">
+    <div class="logo-wrap">
+      <div class="logo">Re<span>d</span>Search</div>
+      <div class="tagline">il tuo motore di ricerca</div>
+    </div>
+
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="search-input" type="text" placeholder="Cerca nel web…" autocomplete="off" spellcheck="false" />
+        <button class="search-btn" onclick="doSearch()">Cerca</button>
+      </div>
+      <div class="suggestions" id="suggestions"></div>
+      <div class="kbd-hint">
+        Premi <span class="kbd">/</span> o <span class="kbd">Ctrl K</span> per cercare &nbsp;·&nbsp;
+        <span class="kbd">?</span> per le scorciatoie
+      </div>
+    </div>
+
+    <div class="categories" id="home-cats">
+      <button class="cat-btn active" data-cat="web" onclick="setCategory(this,'web')">
+        🌐 Web
+      </button>
+      <button class="cat-btn" data-cat="images" onclick="setCategory(this,'images')">
+        🖼 Immagini
+      </button>
+      <button class="cat-btn" data-cat="news" onclick="setCategory(this,'news')">
+        📰 Notizie
+      </button>
+      <button class="cat-btn" data-cat="videos" onclick="setCategory(this,'videos')">
+        ▶ Video
+      </button>
+      <button class="cat-btn" data-cat="maps" onclick="setCategory(this,'maps')">
+        📍 Mappe
+      </button>
+    </div>
+  </div>
+
+  <!-- ── RESULTS BAR ── -->
+  <div id="results-bar">
+    <span class="bar-logo" onclick="goHome()">Re<span>d</span>Search</span>
+    <div class="bar-search-wrap">
+      <div class="bar-search-box">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="bar-input" type="text" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="suggestions" id="bar-suggestions"></div>
+    </div>
+    <div class="bar-cats">
+      <button class="cat-btn active" data-cat="web" onclick="setCategory(this,'web')">🌐 Web</button>
+      <button class="cat-btn" data-cat="images" onclick="setCategory(this,'images')">🖼 Immagini</button>
+      <button class="cat-btn" data-cat="news" onclick="setCategory(this,'news')">📰 Notizie</button>
+      <button class="cat-btn" data-cat="videos" onclick="setCategory(this,'videos')">▶ Video</button>
+      <button class="cat-btn" data-cat="maps" onclick="setCategory(this,'maps')">📍 Mappe</button>
+    </div>
+  </div>
+
+  <!-- ── RESULTS PAGE ── -->
+  <div id="results-page">
+    <div class="result-count" id="result-count"></div>
+    <div id="results-list"></div>
+  </div>
+
+</div>
+
+<!-- ── KEYBOARD SHORTCUTS MODAL ── -->
+<div id="kbd-modal">
+  <div class="modal-box">
+    <div class="modal-title">Scorciatoie tastiera</div>
+    <div class="shortcut-row"><span>Apri ricerca</span><span><span class="kbd">/</span> o <span class="kbd">Ctrl K</span></span></div>
+    <div class="shortcut-row"><span>Cerca</span><span><span class="kbd">Enter</span></span></div>
+    <div class="shortcut-row"><span>Suggerimento su/giù</span><span><span class="kbd">↑</span> <span class="kbd">↓</span></span></div>
+    <div class="shortcut-row"><span>Chiudi / home</span><span><span class="kbd">Esc</span></span></div>
+    <div class="shortcut-row"><span>Mostra scorciatoie</span><span><span class="kbd">?</span></span></div>
+    <button class="close-modal" onclick="closeModal()">Chiudi</button>
+  </div>
+</div>
+
+<script>
+  // ─── state ───────────────────────────────────────────
+  let currentCategory = 'web';
+  let suggestTimer = null;
+  let activeSuggestion = -1;
+  let currentSuggestions = [];
+  let isResultsView = false;
+
+  // ─── engines per categoria ────────────────────────────
+  const engines = {
+    web:    q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+    images: q => `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q)}`,
+    news:   q => `https://www.google.com/search?tbm=nws&q=${encodeURIComponent(q)}`,
+    videos: q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+    maps:   q => `https://www.google.com/maps/search/${encodeURIComponent(q)}`,
+  };
+
+  // ─── suggestions (OpenSearch via DuckDuckGo JSONP) ────
+  function fetchSuggestions(q, boxId) {
+    clearTimeout(suggestTimer);
+    const box = document.getElementById(boxId);
+    if (!q.trim()) { box.classList.remove('open'); return; }
+    suggestTimer = setTimeout(() => {
+      const script = document.createElement('script');
+      window._suggestCb = (data) => {
+        currentSuggestions = data[1] ? data[1].slice(0, 7) : [];
+        activeSuggestion = -1;
+        renderSuggestions(boxId, currentSuggestions);
+        document.head.removeChild(script);
+      };
+      script.src = `https://ac.duckduckgo.com/ac/?q=${encodeURIComponent(q)}&type=list&callback=_suggestCb`;
+      document.head.appendChild(script);
+    }, 160);
+  }
+
+  function renderSuggestions(boxId, list) {
+    const box = document.getElementById(boxId);
+    if (!list.length) { box.classList.remove('open'); return; }
+    box.innerHTML = list.map((s, i) => `
+      <div class="suggestion-item" data-idx="${i}" onmousedown="pickSuggestion('${s.replace(/'/g,"\\'")}')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        ${escHtml(s)}
+      </div>`).join('');
+    box.classList.add('open');
+  }
+
+  function pickSuggestion(s) {
+    activeInput().value = s;
+    document.querySelectorAll('.suggestions').forEach(b => b.classList.remove('open'));
+    doSearch();
+  }
+
+  function activeInput() {
+    return isResultsView ? document.getElementById('bar-input') : document.getElementById('search-input');
+  }
+
+  // ─── category ─────────────────────────────────────────
+  function setCategory(btn, cat) {
+    currentCategory = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.cat === cat);
+    });
+  }
+
+  // ─── search ───────────────────────────────────────────
+  function doSearch() {
+    const q = activeInput().value.trim();
+    if (!q) return;
+    const url = engines[currentCategory](q);
+    window.open(url, '_blank', 'noopener');
+    showResultsView(q);
+  }
+
+  function showResultsView(q) {
+    isResultsView = true;
+    document.getElementById('home').style.display = 'none';
+    document.getElementById('results-bar').classList.add('visible');
+    document.getElementById('results-page').classList.add('visible');
+    document.getElementById('bar-input').value = q;
+    renderFakeResults(q);
+  }
+
+  function goHome() {
+    isResultsView = false;
+    document.getElementById('home').style.display = '';
+    document.getElementById('results-bar').classList.remove('visible');
+    document.getElementById('results-page').classList.remove('visible');
+    document.getElementById('search-input').value = '';
+    document.getElementById('bar-input').value = '';
+  }
+
+  // ─── preview results (apertura diretta sul motore) ────
+  // Mostriamo "shortcut" ai motori più comuni come anteprima navigabile
+  const previewLinks = [
+    { title: q => `${q} — Ricerca Google`, url: q => engines.web(q), site: 'google.com', snippet: q => `Cerca "${q}" su Google. Risultati web, immagini, notizie e altro.` },
+    { title: q => `${q} — DuckDuckGo`, url: q => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`, site: 'duckduckgo.com', snippet: q => `Ricerca privata per "${q}" senza tracciamento. Risultati web organici.` },
+    { title: q => `${q} — Brave Search`, url: q => `https://search.brave.com/search?q=${encodeURIComponent(q)}`, site: 'search.brave.com', snippet: q => `Risultati indipendenti per "${q}" da Brave Search, senza bolle di filtraggio.` },
+    { title: q => `${q} — Wikipedia`, url: q => `https://it.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}`, site: 'it.wikipedia.org', snippet: q => `Cerca "${q}" su Wikipedia in italiano. L'enciclopedia libera.` },
+    { title: q => `${q} — YouTube`, url: q => engines.videos(q), site: 'youtube.com', snippet: q => `Video su "${q}". Guarda tutorial, notizie e contenuti correlati.` },
+    { title: q => `${q} — Reddit`, url: q => `https://www.reddit.com/search/?q=${encodeURIComponent(q)}`, site: 'reddit.com', snippet: q => `Discussioni della community su "${q}". Opinioni, esperienze e consigli reali.` },
+  ];
+
+  function renderFakeResults(q) {
+    const list = document.getElementById('results-list');
+    document.getElementById('result-count').textContent = `Reindirizzamento a ${Object.keys(engines).find(k => engines[k](q) === engines[currentCategory](q)) || currentCategory} · Apertura in corso…`;
+
+    list.innerHTML = previewLinks.map(p => `
+      <div class="result-card" onclick="window.open('${p.url(q).replace(/'/g,"\\'")}','_blank','noopener')">
+        <div class="result-site">
+          <img class="result-favicon" src="https://www.google.com/s2/favicons?sz=16&domain=${p.site}" onerror="this.style.display='none'" alt="">
+          ${p.site}
+        </div>
+        <div class="result-title">${escHtml(p.title(q))}</div>
+        <div class="result-snippet">${escHtml(p.snippet(q))}</div>
+      </div>
+    `).join('');
+  }
+
+  // ─── keyboard nav ─────────────────────────────────────
+  function handleKey(e, boxId) {
+    const box = document.getElementById(boxId);
+    const items = box.querySelectorAll('.suggestion-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeSuggestion = Math.min(activeSuggestion + 1, items.length - 1);
+      highlight(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeSuggestion = Math.max(activeSuggestion - 1, -1);
+      highlight(items);
+    } else if (e.key === 'Enter') {
+      if (activeSuggestion >= 0 && items[activeSuggestion]) {
+        activeInput().value = currentSuggestions[activeSuggestion];
+        box.classList.remove('open');
+      }
+      doSearch();
+    } else if (e.key === 'Escape') {
+      if (box.classList.contains('open')) {
+        box.classList.remove('open');
+      } else {
+        goHome();
+      }
+    }
+  }
+
+  function highlight(items) {
+    items.forEach((el, i) => el.classList.toggle('active', i === activeSuggestion));
+    if (activeSuggestion >= 0) activeInput().value = currentSuggestions[activeSuggestion];
+  }
+
+  // ─── global shortcuts ─────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === '/' || (e.ctrlKey && e.key === 'k')) {
+      e.preventDefault();
+      (isResultsView
+        ? document.getElementById('bar-input')
+        : document.getElementById('search-input')
+      ).focus();
+    }
+    if (e.key === '?') {
+      e.preventDefault();
+      document.getElementById('kbd-modal').classList.add('open');
+    }
+  });
+
+  function closeModal() {
+    document.getElementById('kbd-modal').classList.remove('open');
+  }
+
+  document.getElementById('kbd-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+
+  // ─── wire inputs ──────────────────────────────────────
+  const si = document.getElementById('search-input');
+  si.addEventListener('input', () => fetchSuggestions(si.value, 'suggestions'));
+  si.addEventListener('keydown', e => handleKey(e, 'suggestions'));
+  si.addEventListener('blur', () => setTimeout(() => document.getElementById('suggestions').classList.remove('open'), 150));
+
+  const bi = document.getElementById('bar-input');
+  bi.addEventListener('input', () => fetchSuggestions(bi.value, 'bar-suggestions'));
+  bi.addEventListener('keydown', e => handleKey(e, 'bar-suggestions'));
+  bi.addEventListener('blur', () => setTimeout(() => document.getElementById('bar-suggestions').classList.remove('open'), 150));
+
+  // ─── util ─────────────────────────────────────────────
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
