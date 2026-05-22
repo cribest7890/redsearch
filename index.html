@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -308,46 +309,30 @@ async function sbFetch(path, params = {}) {
   return res.json();
 }
 
+// ── Full-text search via RPC ───────────────────────────────────────────────
 async function searchPages(query, page = 1) {
   const offset = (page - 1) * PAGE_SIZE;
 
-  let url = new URL(SUPABASE_URL + "/rest/v1/pages");
-
-  url.searchParams.set("select", "*");
-
-  // ricerca stile Google
-  url.searchParams.set(
-    "or",
-    `title.ilike.*${query}*,description.ilike.*${query}*,content.ilike.*${query}*`
-  );
-
-  url.searchParams.set("limit", PAGE_SIZE);
-  url.searchParams.set("offset", offset);
-
+  // chiama la funzione RPC search_pages
+  let url = new URL(SUPABASE_URL + "/rest/v1/rpc/search_pages");
   const res = await fetch(url, {
+    method: "POST",
     headers: {
       "apikey": SUPABASE_KEY,
       "Authorization": "Bearer " + SUPABASE_KEY,
-      "Prefer": "count=exact"
-    }
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query, max_results: 200 }),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error("Supabase error: " + err);
+    throw new Error("Supabase RPC error: " + err);
   }
 
   let results = await res.json();
 
-  const countHeader = res.headers.get("content-range");
-  let total = results.length;
-
-  if (countHeader) {
-    const parts = countHeader.split("/");
-    if (parts[1]) total = parseInt(parts[1]);
-  }
-
-  // categorie
+  // filtra per categoria
   const domains = CAT_DOMAINS[currentCategory];
   if (domains) {
     results = results.filter(r =>
@@ -355,7 +340,9 @@ async function searchPages(query, page = 1) {
     );
   }
 
-  return { results, total };
+  const total = results.length;
+  const page_results = results.slice(offset, offset + PAGE_SIZE);
+  return { results: page_results, total };
 }
 
 // ── Suggestions dalla history locale ──────────────────────────────────────
@@ -418,9 +405,15 @@ function doSearch() {
   searchHistory = [q, ...searchHistory.filter(h => h !== q)].slice(0, 30);
   localStorage.setItem("rs_history", JSON.stringify(searchHistory));
   currentQuery = q;
-  currentPage  = 1;
-  showResultsView(q);
-  runSearch(q, 1);
+currentPage  = 1;
+
+// aggiorna URL stile Google
+const url = new URL(window.location);
+url.searchParams.set("search", q);
+window.history.pushState({}, "", url);
+
+showResultsView(q);
+runSearch(q, 1);
 }
 
 function showResultsView(q) {
@@ -597,7 +590,7 @@ bi.addEventListener("blur", () => setTimeout(closeSuggestions, 150));
 function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function escAttr(s) { return String(s).replace(/'/g,"\\'"); }
 
-  // ── URL search param (?search=...) ─────────────────────────────
+// ── URL search param (?search=...) ─────────────────────────────
 window.addEventListener("load", () => {
   const params = new URLSearchParams(window.location.search);
   const q = params.get("search");
